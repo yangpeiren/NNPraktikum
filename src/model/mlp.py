@@ -4,6 +4,7 @@ import numpy as np
 from util.loss_functions import CrossEntropyError
 from model.logistic_layer import LogisticLayer
 from model.classifier import Classifier
+from util.activation_functions import Activation
 
 from sklearn.metrics import accuracy_score
 
@@ -113,6 +114,12 @@ class MultilayerPerceptron(Classifier):
         # Here you have to propagate forward through the layers
         # And remember the activation values of each layer
         """
+        # modified
+        product=np.dot(np.array(inp),np.array(inputWeights))
+        # is it the idea of mlp?
+        self.input_activation_value=sigmoid(product)
+        self.output_activation_value=softmax(product)
+        
         
     def _compute_error(self, target):
         """
