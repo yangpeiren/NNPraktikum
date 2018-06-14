@@ -114,13 +114,14 @@ class MultilayerPerceptron(Classifier):
         # Here you have to propagate forward through the layers
         # And remember the activation values of each layer
         """
-        # modified
-        product=np.dot(np.array(inp),np.array(inputWeights))
-        # is it the idea of mlp?
-        self.input_activation_value=sigmoid(product)
-        self.output_activation_value=softmax(product)
-        
-        
+        # LiuZhiang 14.06.2018
+        # layerOutp : ndarray
+        #             remembers the activation values of each layer including inp
+        #             layerOutp[0]==inp
+        self.layerOutp.append(inp)
+        for i in range(0,self.layers.size): 
+            self.layerOutp.append(self.layers[i].forward(self.layerOutp[0]))
+            
     def _compute_error(self, target):
         """
         Compute the total error of the network (error terms from the output layer)
@@ -130,7 +131,13 @@ class MultilayerPerceptron(Classifier):
         ndarray :
             a numpy array (1,nOut) containing the output of the layer
         """
-        pass
+        # LiuZhiang 14.06.2018
+        # netOutp: ndarray
+        #          the output of the last layer, i.e. of the network
+        # ?return?:
+        #          the result of loss function E()
+        self.netOutp=self.layerOutp[self.layerOutp.size-1]
+        return self.loss.calculateError(target, self.netOutp)
     
     def _update_weights(self, learningRate):
         """
