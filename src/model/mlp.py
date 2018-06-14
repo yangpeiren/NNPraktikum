@@ -120,7 +120,7 @@ class MultilayerPerceptron(Classifier):
         #             layerOutp[0]==inp
         self.layerOutp.append(inp)
         for i in range(0,self.layers.size): 
-            self.layerOutp.append(self.layers[i].forward(self.layerOutp[0]))
+            self.layerOutp.append(self.layers[i].forward(self.layerOutp[i]))
             
     def _compute_error(self, target):
         """
