@@ -5,6 +5,7 @@ from data.mnist_seven import MNISTSeven
 from model.stupid_recognizer import StupidRecognizer
 from model.perceptron import Perceptron
 from model.logistic_regression import LogisticRegression
+from model.mlp import MultilayerPerceptron
 
 from report.evaluator import Evaluator
 from report.performance_plot import PerformancePlot
@@ -28,7 +29,12 @@ def main():
                                         data.testSet,
                                         learningRate=0.005,
                                         epochs=30)
-                                        
+    # Liu Zhiang 14.06.2018
+    myMLPClassifier = MultilayerPerceptron(data.trainingSet,
+                                        data.validationSet,
+                                        data.testSet,
+                                        learningRate=0.005,
+                                        epochs=30)                                   
     
     # Report the result #
     print("=========================")
