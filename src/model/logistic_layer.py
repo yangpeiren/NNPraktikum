@@ -149,7 +149,6 @@ class LogisticLayer():
             self.weights[:, neuron] -= (learningRate *
                                         self.deltas[neuron] *
                                         self.inp)
-        
 
     def _fire(self, inp):
         return self.activation(np.dot(inp, self.weights))

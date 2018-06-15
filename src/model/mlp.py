@@ -1,7 +1,7 @@
 
 import numpy as np
 
-from util.loss_functions import CrossEntropyError
+from util.loss_functions import *
 from model.logistic_layer import LogisticLayer
 from model.classifier import Classifier
 from util.activation_functions import Activation
@@ -44,7 +44,8 @@ class MultilayerPerceptron(Classifier):
         self.epochs = epochs
         self.outputTask = outputTask  # Either classification or regression
         self.outputActivation = outputActivation
-        self.cost = cost
+        self.cost = []
+        self.memory = {}
 
         self.trainingSet = train
         self.validationSet = valid
@@ -92,7 +93,6 @@ class MultilayerPerceptron(Classifier):
                                               axis=1)
         self.testSet.input = np.insert(self.testSet.input, 0, 1, axis=1)
 
-
     def _get_layer(self, layer_index):
         return self.layers[layer_index]
 
@@ -114,14 +114,10 @@ class MultilayerPerceptron(Classifier):
         # Here you have to propagate forward through the layers
         # And remember the activation values of each layer
         """
-        # LiuZhiang 14.06.2018
-        # layerOutp : ndarray
-        #             remembers the activation values of each layer including inp
-        #             layerOutp[0]==inp
-        self.layerOutp.append(inp)
-        for i in range(0,self.layers.size): 
-            self.layerOutp.append(self.layers[i].forward(self.layerOutp[i]))
-            
+        self.memory['layer1'] = self.layers[0].forward(inp)
+        temp = np.insert(self.memory['layer1'], 0, 1, axis=1)
+        self.memory['layer2'] = self.layers[1].forward(temp)
+
     def _compute_error(self, target):
         """
         Compute the total error of the network (error terms from the output layer)
@@ -131,20 +127,19 @@ class MultilayerPerceptron(Classifier):
         ndarray :
             a numpy array (1,nOut) containing the output of the layer
         """
-        # LiuZhiang 14.06.2018
-        # netOutp: ndarray
-        #          the output of the last layer, i.e. of the network
-        # ?return?:
-        #          the result of loss function E()
-        self.netOutp=self.layerOutp[self.layerOutp.size-1]
-        return self.loss.calculateError(target, self.netOutp)
+        return self.loss.calculateError(target, self.memory['layer2'])
     
     def _update_weights(self, learningRate):
         """
         Update the weights of the layers by propagating back the error
         """
-        pass
-        
+        error = self._compute_error(self.trainingSet.label)
+        self.memory['derivatives2'] = self.layers[1].computeDerivative(error, np.ones((10, 1)))
+        self.layers[1].updateWeights(learningRate)
+        self.layers[0].computeDerivative(self.memory['derivatives2'],self.layers[1].weights)
+        self.layers[0].updateWeights(learningRate)
+
+
     def train(self, verbose=True):
         """Train the Multi-layer Perceptrons
 

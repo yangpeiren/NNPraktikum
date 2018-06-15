@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import numpy as np
 
 
 class DataSet(object):
@@ -28,7 +29,8 @@ class DataSet(object):
         # The label of the digits is always the first fields
         # Doing normalization
         self.input = (1.0 * data[:, 1:])/255
-        self.label = data[:, 0]
+
+        self.label = self.transfer_label(data[:, 0])
         self.oneHot = oneHot
         self.targetDigit = targetDigit
 
@@ -38,6 +40,16 @@ class DataSet(object):
             self.label = list(map(lambda a: 1 
                             if str(a) == targetDigit else 0, 
                             self.label))
+
+    @staticmethod
+    def transfer_label(label):
+        bin_label = np.zeros((label.shape[0], 10))
+        for index, line in enumerate(label):
+            bin_label[index][line] = 1
+
+        return bin_label
+
+
 
     def __iter__(self):
         return self.input.__iter__()
