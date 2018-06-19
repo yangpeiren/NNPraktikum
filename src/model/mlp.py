@@ -87,11 +87,13 @@ class MultilayerPerceptron(Classifier):
         self.inputWeights = inputWeights
 
         # add bias values ("1"s) at the beginning of all data sets
+        '''
         self.trainingSet.input = np.insert(self.trainingSet.input, 0, 1,
                                             axis=1)
         self.validationSet.input = np.insert(self.validationSet.input, 0, 1,
                                               axis=1)
         self.testSet.input = np.insert(self.testSet.input, 0, 1, axis=1)
+        '''
 
     def _get_layer(self, layer_index):
         return self.layers[layer_index]

@@ -29,13 +29,16 @@ class DataSet(object):
         # The label of the digits is always the first fields
         # Doing normalization
         self.input = (1.0 * data[:, 1:])/255
-
+        self.labelBool = data[:, 0]
         self.label = self.transfer_label(data[:, 0])
         self.oneHot = oneHot
         self.targetDigit = targetDigit
 
         # Transform all labels which is not the targetDigit to False,
-        # The label of targetDigit will be True,
+        # The label of targetDigit will be True, stored in labelBool
+        self.labelBool = list(map(lambda a: 1
+            if str(a) == targetDigit else 0,
+            self.labelBool))
         if oneHot:
             self.label = list(map(lambda a: 1 
                             if str(a) == targetDigit else 0, 
