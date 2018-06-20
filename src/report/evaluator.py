@@ -12,7 +12,7 @@ class Evaluator:
 
     def printTestLabel(self, testSet):
         # print all test labels
-        for label in testSet.label:
+        for label in testSet.labelBool:
             print(label)
 
     def printResultedLabel(self, pred):
@@ -21,17 +21,17 @@ class Evaluator:
             print(result)
 
     def printComparison(self, testSet, pred):
-        for label, result in zip(testSet.label, pred):
+        for label, result in zip(testSet.labelBool, pred):
             print("Label: %r. Prediction: %r" % (bool(label), bool(result)))
 
     def printClassificationResult(self, testSet, pred, targetNames):
-        print(classification_report(testSet.label,
+        print(classification_report(testSet.labelBool,
                                     pred,
                                     target_names=targetNames))
 
     def printConfusionMatrix(self, testSet, pred):
-        print(confusion_matrix(testSet.label, pred))
+        print(confusion_matrix(testSet.labelBool, pred))
 
     def printAccuracy(self, testSet, pred):
         print("Accuracy of the recognizer: %.2f%%" %
-              (accuracy_score(testSet.label, pred)*100))
+              (accuracy_score(testSet.labelBool, pred)*100))
