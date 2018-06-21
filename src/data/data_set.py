@@ -52,7 +52,5 @@ class DataSet(object):
 
         return bin_label
 
-
-
     def __iter__(self):
         return self.input.__iter__()

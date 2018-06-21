@@ -87,13 +87,12 @@ class MultilayerPerceptron(Classifier):
         self.inputWeights = inputWeights
 
         # add bias values ("1"s) at the beginning of all data sets
-        '''
+
         self.trainingSet.input = np.insert(self.trainingSet.input, 0, 1,
                                             axis=1)
         self.validationSet.input = np.insert(self.validationSet.input, 0, 1,
                                               axis=1)
         self.testSet.input = np.insert(self.testSet.input, 0, 1, axis=1)
-        '''
 
     def _get_layer(self, layer_index):
         return self.layers[layer_index]
@@ -117,7 +116,7 @@ class MultilayerPerceptron(Classifier):
         # And remember the activation values of each layer
         """
         self.memory['layer1'] = self.layers[0].forward(inp)
-        temp = np.insert(self.memory['layer1'], 0, 1, axis=1)
+        temp = np.insert(self.memory['layer1'], 0, 1)
         self.memory['layer2'] = self.layers[1].forward(temp)
 
     def _compute_error(self, target):
@@ -136,11 +135,11 @@ class MultilayerPerceptron(Classifier):
         Update the weights of the layers by propagating back the error
         """
         error = self._compute_error(self.trainingSet.label)
-        self.memory['derivatives2'] = self.layers[1].computeDerivative(error, np.ones((10, 1)))
+        self.memory['derivatives2'] = self.layers[1].computeDerivative(error, np.ones(10))
         self.layers[1].updateWeights(learningRate)
-        self.layers[0].computeDerivative(self.memory['derivatives2'],self.layers[1].weights)
+        # FIXME: np.insert(self.memory['derivatives2'], 0, 1) problem with dimension!!!
+        self.layers[0].computeDerivative(np.insert(self.memory['derivatives2'], 0, 1), self.layers[1].weights.T)
         self.layers[0].updateWeights(learningRate)
-
 
     def train(self, verbose=True):
         """Train the Multi-layer Perceptrons
@@ -150,15 +149,36 @@ class MultilayerPerceptron(Classifier):
         verbose : boolean
             Print logging messages with validation accuracy if verbose is True.
         """
-        pass
+        for epoch in range(self.epochs):
+            if verbose:
+                print("Training epoch {0}/{1}..".format(epoch + 1, self.epochs))
 
+            self._train_one_epoch()
 
+            if verbose:
+                accuracy = accuracy_score(self.validationSet.label,
+                                          self.evaluate(self.validationSet))
+                # Record the performance of each epoch for later usages
+                # e.g. plotting, reporting..
+                self.performances.append(accuracy)
+                print("Accuracy on validation: {0:.2f}%"
+                      .format(accuracy * 100))
+                print("-----------------------------")
 
-    def classify(self, test_instance):
+    def _train_one_epoch(self):
+
+        for img in self.trainingSet.input:
+
+            # Do a forward pass to calculate the output and the error
+            self._feed_forward(img)
+
+            # Update weights in the online learning fashion
+            self._update_weights(self.learningRate)
+
+    def classify(self, test_instances):
         # Classify an instance given the model of the classifier
         # You need to implement something here
-        pass
-        
+        self._feed_forward(test_instances)
 
     def evaluate(self, test=None):
         """Evaluate a whole dataset.
@@ -177,7 +197,8 @@ class MultilayerPerceptron(Classifier):
             test = self.testSet.input
         # Once you can classify an instance, just use map for all of the test
         # set.
-        return list(map(self.classify, test))
+        self.classify(test)
+        return self.memory['layer2']
 
     def __del__(self):
         # Remove the bias from input data
@@ -185,3 +206,4 @@ class MultilayerPerceptron(Classifier):
         self.validationSet.input = np.delete(self.validationSet.input, 0,
                                               axis=1)
         self.testSet.input = np.delete(self.testSet.input, 0, axis=1)
+

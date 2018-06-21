@@ -104,8 +104,7 @@ class BinaryCrossEntropyError(Error):
     """
     def errorString(self):
         self.errorString = 'bce'
-    # Liu Zhiang 14.06.2018 
-    # correction of the np.log rather than log
+
     def calculateError(self, target, output):
         return np.sum(target*np.log(output) + (1-target)*np.log(1-output))
         
