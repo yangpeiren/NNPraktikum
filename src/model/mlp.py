@@ -155,10 +155,11 @@ class MultilayerPerceptron(Classifier):
             self._train_one_epoch()
 
             if verbose:
-                accuracy = accuracy_score(self.validationSet.label,
-                                          self.evaluate(self.validationSet))
+
                 # Record the performance of each epoch for later usages
                 # e.g. plotting, reporting..
+                accuracy = accuracy_score(self.validationSet.label,
+                                          self.transform(self.evaluate(self.validationSet.input)))
                 self.performances.append(accuracy)
                 print("Accuracy on validation: {0:.2f}%"
                       .format(accuracy * 100))
@@ -178,6 +179,38 @@ class MultilayerPerceptron(Classifier):
         # Classify an instance given the model of the classifier
         # You need to implement something here
         self._feed_forward(test_instance)
+
+    def calcul_score(self, labels, outps):
+        """ TODO: whatever
+        ----
+        label: a matrix
+        outp: a matrix
+        ----
+        RETURN: a float
+        """
+        score = 0
+        for label, outp in zip(labels, outps):
+            score += np.sum(np.square(label-outp))
+        score = np.sqrt(np.divide(score, labels.shape[0]))
+        print(score)
+        return 1.0 - score
+
+    def transform(self, outps):
+        """
+
+        :param outps: a matrix
+        :return: a matrix that transform the input into a binary matrix that marks the largest element as 1 for each row
+        """
+        bin_outps = np.zeros((outps.shape[0], outps.shape[1]))
+        for index, outp in enumerate(outps):
+            label_index = np.argmax(outp)
+            bin_outps[index][label_index] = 1
+            print(outp)
+            print(self.validationSet.label[index])
+            print(label_index)
+            print(index)
+        print(bin_outps)
+        return bin_outps
 
     def evaluate(self, test=None):
         """Evaluate a whole dataset.
@@ -203,7 +236,6 @@ class MultilayerPerceptron(Classifier):
                 outp = np.array(self.memory['layer2'], ndmin=2)
                 continue
             outp = np.concatenate((outp, np.array(self.memory['layer2'], ndmin=2)))
-        print(outp.shape)
         return outp
 
     def __del__(self):
