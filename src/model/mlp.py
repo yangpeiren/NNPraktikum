@@ -137,7 +137,6 @@ class MultilayerPerceptron(Classifier):
         error = self._compute_error(self.trainingSet.label)
         self.memory['derivatives2'] = self.layers[1].computeDerivative(error, np.ones(10))
         self.layers[1].updateWeights(learningRate)
-        # FIXME: np.insert(self.memory['derivatives2'], 0, 1) problem with dimension!!!
         self.layers[0].computeDerivative(self.memory['derivatives2'], self.layers[1].weights.T)
         self.layers[0].updateWeights(learningRate)
 
@@ -175,10 +174,10 @@ class MultilayerPerceptron(Classifier):
             # Update weights in the online learning fashion
             self._update_weights(self.learningRate)
 
-    def classify(self, test_instances):
+    def classify(self, test_instance):
         # Classify an instance given the model of the classifier
         # You need to implement something here
-        self._feed_forward(test_instances)
+        self._feed_forward(test_instance)
 
     def evaluate(self, test=None):
         """Evaluate a whole dataset.
@@ -197,8 +196,15 @@ class MultilayerPerceptron(Classifier):
             test = self.testSet.input
         # Once you can classify an instance, just use map for all of the test
         # set.
-        self.classify(test)
-        return self.memory['layer2']
+        outp = None
+        for img in test:
+            self.classify(img)
+            if outp is None:
+                outp = np.array(self.memory['layer2'], ndmin=2)
+                continue
+            outp = np.concatenate((outp, np.array(self.memory['layer2'], ndmin=2)))
+        print(outp.shape)
+        return outp
 
     def __del__(self):
         # Remove the bias from input data

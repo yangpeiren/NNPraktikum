@@ -1,6 +1,7 @@
 import time
 
 import numpy as np
+from sklearn.preprocessing import minmax_scale
 
 from util.activation_functions import Activation
 
@@ -152,8 +153,8 @@ class LogisticLayer():
                                         self.inp)
 
     def _fire(self, inp):
-        print(inp.shape)
-        prod = np.dot(inp, self.weights)
-        activated = self.activation(prod)
-        print(activated)
-        return activated
+
+        # Do a min_max scaling to prod to avoid overflow, for any format of inp
+        # FIXME: Find a proper Range for minmax_scale!
+        prod = minmax_scale(np.dot(inp, self.weights), feature_range=(-10, 10))
+        return self.activation(prod)
