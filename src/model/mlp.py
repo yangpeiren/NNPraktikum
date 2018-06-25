@@ -138,7 +138,7 @@ class MultilayerPerceptron(Classifier):
         self.memory['derivatives2'] = self.layers[1].computeDerivative(error, np.ones(10))
         self.layers[1].updateWeights(learningRate)
         # FIXME: np.insert(self.memory['derivatives2'], 0, 1) problem with dimension!!!
-        self.layers[0].computeDerivative(np.insert(self.memory['derivatives2'], 0, 1), self.layers[1].weights.T)
+        self.layers[0].computeDerivative(self.memory['derivatives2'], self.layers[1].weights.T)
         self.layers[0].updateWeights(learningRate)
 
     def train(self, verbose=True):
