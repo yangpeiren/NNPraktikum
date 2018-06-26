@@ -156,5 +156,7 @@ class LogisticLayer():
 
         # Do a min_max scaling to prod to avoid overflow, for any format of inp
         # FIXME: Find a proper Range for minmax_scale!
-        prod = minmax_scale(np.dot(inp, self.weights), feature_range=(-10, 10))
-        return self.activation(prod)
+        raw_prod = np.dot(inp, self.weights)
+        # scaled_prod = minmax_scale(raw_prod, feature_range=(-10, 10))
+
+        return self.activation(raw_prod)

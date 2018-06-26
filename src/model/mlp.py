@@ -17,7 +17,7 @@ class MultilayerPerceptron(Classifier):
 
     def __init__(self, train, valid, test, layers=None, inputWeights=None,
                  outputTask='classification', outputActivation='softmax',
-                 loss='bce', learningRate=0.01, epochs=50):
+                 loss='bce', learningRate=0.005, epochs=50):
 
         """
         A MNIST recognizer based on multi-layer perceptron algorithm
@@ -130,11 +130,11 @@ class MultilayerPerceptron(Classifier):
         """
         return self.loss.calculateError(target, self.memory['layer2'])
     
-    def _update_weights(self, learningRate):
+    def _update_weights(self, learningRate, current_index):
         """
         Update the weights of the layers by propagating back the error
         """
-        error = self._compute_error(self.trainingSet.label)
+        error = self._compute_error(self.trainingSet.label[current_index])
         self.memory['derivatives2'] = self.layers[1].computeDerivative(error, np.ones(10))
         self.layers[1].updateWeights(learningRate)
         self.layers[0].computeDerivative(self.memory['derivatives2'], self.layers[1].weights.T)
@@ -167,13 +167,13 @@ class MultilayerPerceptron(Classifier):
 
     def _train_one_epoch(self):
 
-        for img in self.trainingSet.input:
+        for index, img in enumerate(self.trainingSet.input):
 
             # Do a forward pass to calculate the output and the error
             self._feed_forward(img)
 
             # Update weights in the online learning fashion
-            self._update_weights(self.learningRate)
+            self._update_weights(self.learningRate, index)
 
     def classify(self, test_instance):
         # Classify an instance given the model of the classifier
@@ -192,23 +192,19 @@ class MultilayerPerceptron(Classifier):
         for label, outp in zip(labels, outps):
             score += np.sum(np.square(label-outp))
         score = np.sqrt(np.divide(score, labels.shape[0]))
-        print(score)
         return 1.0 - score
 
     def transform(self, outps):
         """
 
         :param outps: a matrix
-        :return: a matrix that transform the input into a binary matrix that marks the largest element as 1 for each row
+        :return: a matrix that transform the input into a binary matrix that marks
+                 the largest element as 1 for each row
         """
         bin_outps = np.zeros((outps.shape[0], outps.shape[1]))
         for index, outp in enumerate(outps):
             label_index = np.argmax(outp)
             bin_outps[index][label_index] = 1
-            print(outp)
-            print(self.validationSet.label[index])
-            print(label_index)
-            print(index)
         print(bin_outps)
         return bin_outps
 
