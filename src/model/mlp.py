@@ -17,7 +17,7 @@ class MultilayerPerceptron(Classifier):
 
     def __init__(self, train, valid, test, layers=None, inputWeights=None,
                  outputTask='classification', outputActivation='softmax',
-                 loss='bce', learningRate=0.005, epochs=50):
+                 loss='sse', learningRate=0.005, epochs=50):
 
         """
         A MNIST recognizer based on multi-layer perceptron algorithm
@@ -65,7 +65,7 @@ class MultilayerPerceptron(Classifier):
             raise ValueError('There is no predefined loss function ' +
                              'named ' + str)
 
-        # Record the performance of each epoch for later usages
+        # Record the performance 9.98977852e-01of each epoch for later usages
         # e.g. plotting, reporting..
         self.performances = []
 
@@ -81,13 +81,12 @@ class MultilayerPerceptron(Classifier):
 
         # Output layer
         outputActivation = "softmax"
-        self.layers.append(LogisticLayer(128, 10, 
+        self.layers.append(LogisticLayer(128, 10,
                            None, outputActivation, True))
 
         self.inputWeights = inputWeights
 
         # add bias values ("1"s) at the beginning of all data sets
-
         self.trainingSet.input = np.insert(self.trainingSet.input, 0, 1,
                                             axis=1)
         self.validationSet.input = np.insert(self.validationSet.input, 0, 1,
@@ -115,9 +114,9 @@ class MultilayerPerceptron(Classifier):
         # Here you have to propagate forward through the layers
         # And remember the activation values of each layer
         """
-        self.memory['layer1'] = self.layers[0].forward(inp)
-        temp = np.insert(self.memory['layer1'], 0, 1)
-        self.memory['layer2'] = self.layers[1].forward(temp)
+        self.layers[0].forward(inp)
+        self.layers[0].outp = np.insert(self.layers[0].outp, 0, 1)
+        self.memory['layer2'] = self.layers[1].forward(self.layers[0].outp)
 
     def _compute_error(self, target):
         """
@@ -130,19 +129,17 @@ class MultilayerPerceptron(Classifier):
         """
         return self.loss.calculateError(target, self.memory['layer2'])
     
-    def _update_weights(self, learningRate, current_index):
+    def _update_weights(self, learningRate, deltas0, deltas1, inputs1):
         """
         Update the weights of the layers by propagating back the error
         """
-        error = self._compute_error(self.trainingSet.label[current_index])
-        self.memory['derivatives2'] = self.layers[1].computeDerivative(error, np.ones(10))
-        self.layers[1].updateWeights(learningRate)
-        self.layers[0].computeDerivative(self.memory['derivatives2'], self.layers[1].weights.T)
-        self.layers[0].updateWeights(learningRate)
+        self.layers[1].updateWeights(learningRate, deltas1.T,
+                                     self.trainingSet.input.shape[0], np.divide(inputs1, self.trainingSet.input.shape[0]))
+        self.layers[0].updateWeights(learningRate, deltas0.T,
+                                     self.trainingSet.input.shape[0], np.mean(self.trainingSet.input[0], axis = 0))
 
     def train(self, verbose=True):
         """Train the Multi-layer Perceptrons
-
         Parameters
         ----------
         verbose : boolean
@@ -166,14 +163,21 @@ class MultilayerPerceptron(Classifier):
                 print("-----------------------------")
 
     def _train_one_epoch(self):
-
+        inputs1 = np.zeros(129)
+        deltas1 = np.zeros((129, 10))
+        deltas0 = np.zeros((self.trainingSet.input.shape[1], 129))
         for index, img in enumerate(self.trainingSet.input):
 
             # Do a forward pass to calculate the output and the error
             self._feed_forward(img)
-
-            # Update weights in the online learning fashion
-            self._update_weights(self.learningRate, index)
+            inputs1 += self.layers[0].outp
+            error = self._compute_error(self.trainingSet.label[index])
+            temp_delta = self.layers[1].computeDerivative(error, np.ones(10))
+            deltas1 += temp_delta
+            deltas0 += self.layers[0].computeDerivative(temp_delta, self.layers[1].weights.T)
+        # Update weights in the online learning fashion
+        self._update_weights(self.learningRate, deltas0, deltas1, inputs1)
+        print("error: ", error)
 
     def classify(self, test_instance):
         # Classify an instance given the model of the classifier

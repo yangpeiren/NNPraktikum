@@ -33,7 +33,7 @@ def main():
     myMLPClassifier = MultilayerPerceptron(data.trainingSet,
                                         data.validationSet,
                                         data.testSet,
-                                        learningRate=0.005,
+                                        learningRate=0.001,
                                         epochs=30)
     myMLPClassifier.train()
     

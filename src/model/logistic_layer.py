@@ -76,13 +76,13 @@ class LogisticLayer():
 
         Parameters
         ----------
-        inp : ndarray
+        inp : ndarrayself.memory['derivatives2'] =
             a numpy array (nIn + 1,1) containing the input of the layer
 
         Change outp
         -------
         outp: ndarray
-            a numpy array (nOut,1) containing the output of the layer
+            a numpy array (nOut,1) containing the output of the layerself.memory['derivatives2'] =
         """
 
         # Here you have to implement the forward pass
@@ -94,7 +94,7 @@ class LogisticLayer():
 
     def computeDerivative(self, next_derivatives, next_weights):
         """
-        Compute the derivatives (backward)
+        Compute the derivatives (backward)self.memory['derivatives2'] =
 
         Parameters
         ----------
@@ -102,7 +102,7 @@ class LogisticLayer():
             a numpy array containing the derivatives from next layer
         next_weights : ndarray
             a numpy array containing the weights from next layer
-
+layers
         Change deltas
         -------
         deltas: ndarray
@@ -125,38 +125,36 @@ class LogisticLayer():
 
         # Or even more general: doesn't care which activation function is used
         # dado: derivative of activation function w.r.t the output
-        #dado = self.activationDerivative(self.outp)
+        dado = self.activationDerivative(self.outp)
         #self.deltas = (dado * np.dot(next_derivatives, next_weights))
-
+        self.deltas = (dado * np.dot(next_derivatives, next_weights))
         # Or you can explicitly calculate the derivatives for two cases
         # Page 40 Back-propagation slides
-        if self.isClassifierLayer:
-            self.deltas = (next_derivatives - self.outp) * self.outp * \
-                          (1 - self.outp)
-        else:
-            outp = np.insert(self.outp, 0, 1)
-            self.deltas = outp * (1 - outp) * \
-                          np.dot(next_derivatives, next_weights)
+        # if self.isClassifierLayer:
+        #     self.deltas = (next_derivatives - self.outp) * self.outp * \
+        #                   (1 - self.outp)
+        # else:
+        #     self.deltas = self.outp * (1 - self.outp) * \
+        #                   np.dot(next_derivatives, next_weights)
         #Or you can have two computeDerivative methods, feel free to call
         # the other is computeOutputLayerDerivative or such.
         return self.deltas
 
-    def updateWeights(self, learningRate):
+    def updateWeights(self, learningRate, deltas, num_samples, inputs):
         """
         Update the weights of the layer
         """
-
         # weight updating as gradient descent principle
         for neuron in range(0, self.nOut):
             self.weights[:, neuron] -= (learningRate *
-                                        self.deltas[neuron] *
-                                        self.inp)
+                                        (np.divide(deltas[neuron], num_samples))*
+                                        inputs)
 
     def _fire(self, inp):
 
         # Do a min_max scaling to prod to avoid overflow, for any format of inp
         # FIXME: Find a proper Range for minmax_scale!
         raw_prod = np.dot(inp, self.weights)
-        # scaled_prod = minmax_scale(raw_prod, feature_range=(-10, 10))
+        scaled_prod = minmax_scale(raw_prod, feature_range=(-10, 10))
 
-        return self.activation(raw_prod)
+        return self.activation(scaled_prod)
