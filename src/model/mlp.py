@@ -115,8 +115,8 @@ class MultilayerPerceptron(Classifier):
         # And remember the activation values of each layer
         """
         self.layers[0].forward(inp)
-        self.layers[0].outp = np.insert(self.layers[0].outp, 0, 1)
-        self.memory['layer2'] = self.layers[1].forward(self.layers[0].outp)
+        self.layers[1].inp = np.insert(self.layers[0].outp, 0, 1)
+        self.memory['layer2'].append(self.layers[1].forward(self.layers[1].inp))
 
     def _compute_error(self, target):
         """
@@ -128,15 +128,10 @@ class MultilayerPerceptron(Classifier):
             a numpy array (1,nOut) containing the output of the layer
         """
         return self.loss.calculateError(target, self.memory['layer2'])
-    
-    def _update_weights(self, learningRate, deltas0, deltas1, inputs1):
-        """
-        Update the weights of the layers by propagating back the error
-        """
-        self.layers[1].updateWeights(learningRate, deltas1.T,
-                                     self.trainingSet.input.shape[0], np.divide(inputs1, self.trainingSet.input.shape[0]))
-        self.layers[0].updateWeights(learningRate, deltas0.T,
-                                     self.trainingSet.input.shape[0], np.mean(self.trainingSet.input[0], axis = 0))
+
+    def _update_weights(self, learningRate,delta_input,delta_output):
+        self.layers[1].updateWeights(learningRate,delta_output)
+        self.layers[0].updateWeights(learningRate,delta_input)
 
     def train(self, verbose=True):
         """Train the Multi-layer Perceptrons
@@ -149,7 +144,15 @@ class MultilayerPerceptron(Classifier):
             if verbose:
                 print("Training epoch {0}/{1}..".format(epoch + 1, self.epochs))
 
+            if "layer2" in self.memory:
+                del self.memory['layer2'][:]
+            else:
+                self.memory['layer2'] = []
+
             self._train_one_epoch()
+
+            error = self._compute_error(self.trainingSet.label)
+            print("error: ", error)
 
             if verbose:
 
@@ -163,21 +166,21 @@ class MultilayerPerceptron(Classifier):
                 print("-----------------------------")
 
     def _train_one_epoch(self):
-        inputs1 = np.zeros(129)
-        deltas1 = np.zeros((129, 10))
-        deltas0 = np.zeros((self.trainingSet.input.shape[1], 129))
-        for index, img in enumerate(self.trainingSet.input):
 
-            # Do a forward pass to calculate the output and the error
+        delta_output = 0
+        delta_input  = 0
+
+        for index,img in enumerate(self.trainingSet.input):
+            #forwarding,output result stored in self.memory['layer2']
             self._feed_forward(img)
-            inputs1 += self.layers[0].outp
-            error = self._compute_error(self.trainingSet.label[index])
-            temp_delta = self.layers[1].computeDerivative(error, np.ones(10))
-            deltas1 += temp_delta
-            deltas0 += self.layers[0].computeDerivative(temp_delta, self.layers[1].weights.T)
-        # Update weights in the online learning fashion
-        self._update_weights(self.learningRate, deltas0, deltas1, inputs1)
-        print("error: ", error)
+            #(txj-oxj)
+            target_error = self.trainingSet.label[index] - self.memory['layer2'][-1]
+            #output layer: delta(j) = (txj-oxj)oxj(1-oxj)
+            delta_output = self.layers[1].computeDerivative(target_error,np.ones(10))
+            #input layer
+            delta_input  = self.layers[0].computeDerivative(self.layers[1].weights,delta_output)
+            #update weights
+            self._update_weights(self.learningRate,delta_input,delta_output)
 
     def classify(self, test_instance):
         # Classify an instance given the model of the classifier
@@ -233,9 +236,9 @@ class MultilayerPerceptron(Classifier):
         for img in test:
             self.classify(img)
             if outp is None:
-                outp = np.array(self.memory['layer2'], ndmin=2)
+                outp = np.array(self.memory['layer2'][-1], ndmin=2)
                 continue
-            outp = np.concatenate((outp, np.array(self.memory['layer2'], ndmin=2)))
+            outp = np.concatenate((outp, np.array(self.memory['layer2'][-1], ndmin=2)))
         return outp
 
     def __del__(self):

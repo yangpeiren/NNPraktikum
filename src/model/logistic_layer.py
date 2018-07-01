@@ -127,7 +127,11 @@ layers
         # dado: derivative of activation function w.r.t the output
         dado = self.activationDerivative(self.outp)
         #self.deltas = (dado * np.dot(next_derivatives, next_weights))
-        self.deltas = (dado * np.dot(next_derivatives, next_weights))
+        if self.isClassifierLayer:
+            self.deltas = np.multiply(dado, np.multiply(next_derivatives, next_weights))
+        else:
+            #delete the bias in next_derivatives
+            self.deltas = np.multiply(dado, np.dot(next_derivatives[1:], next_weights))
         # Or you can explicitly calculate the derivatives for two cases
         # Page 40 Back-propagation slides
         # if self.isClassifierLayer:
@@ -140,15 +144,15 @@ layers
         # the other is computeOutputLayerDerivative or such.
         return self.deltas
 
-    def updateWeights(self, learningRate, deltas, num_samples, inputs):
+    def updateWeights(self, learningRate, deltas):
         """
         Update the weights of the layer
         """
-        # weight updating as gradient descent principle
         for neuron in range(0, self.nOut):
-            self.weights[:, neuron] -= (learningRate *
-                                        (np.divide(deltas[neuron], num_samples))*
-                                        inputs)
+            self.weights[:, neuron] += (learningRate *
+                                        deltas[neuron]*
+                                        self.inp)
+        return
 
     def _fire(self, inp):
 
