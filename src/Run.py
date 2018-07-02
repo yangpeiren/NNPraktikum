@@ -12,7 +12,7 @@ from report.performance_plot import PerformancePlot
 import numpy as np
 
 def main():
-    data = MNISTSeven("data/mnist_seven.csv", 3000, 1000, 1000,
+    data = MNISTSeven("../data/mnist_seven.csv", 3000, 1000, 1000,
                                                     oneHot=False)
 
     # myStupidClassifier = StupidRecognizer(data.trainingSet,
@@ -80,9 +80,9 @@ def main():
     # evaluator.printAccuracy(data.testSet, lrPred)
     #
     # # Draw
-    # plot = PerformancePlot("Logistic Regression validation")
-    # plot.draw_performance_epoch(myLRClassifier.performances,
-    #                             myLRClassifier.epochs)
+    plot = PerformancePlot("MLP")
+    plot.draw_performance_epoch(myMLPClassifier.performances,
+                                myMLPClassifier.epochs)
     
     
 if __name__ == '__main__':

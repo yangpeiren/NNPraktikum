@@ -17,7 +17,7 @@ class MultilayerPerceptron(Classifier):
 
     def __init__(self, train, valid, test, layers=None, inputWeights=None,
                  outputTask='classification', outputActivation='softmax',
-                 loss='sse', learningRate=0.005, epochs=50):
+                 loss='ce', learningRate=0.005, epochs=50):
 
         """
         A MNIST recognizer based on multi-layer perceptron algorithm
@@ -61,6 +61,8 @@ class MultilayerPerceptron(Classifier):
             self.loss = DifferentError()
         elif loss == 'absolute':
             self.loss = AbsoluteError()
+        elif loss == 'ce':
+            self.loss = CrossEntropyError()
         else:
             raise ValueError('There is no predefined loss function ' +
                              'named ' + str)
@@ -129,9 +131,9 @@ class MultilayerPerceptron(Classifier):
         """
         return self.loss.calculateError(target, self.memory['layer2'])
 
-    def _update_weights(self, learningRate,delta_input,delta_output):
-        self.layers[1].updateWeights(learningRate,delta_output)
-        self.layers[0].updateWeights(learningRate,delta_input)
+    def _update_weights(self, learningRate, delta_input, delta_output):
+        self.layers[1].updateWeights(learningRate, delta_output)
+        self.layers[0].updateWeights(learningRate, delta_input)
 
     def train(self, verbose=True):
         """Train the Multi-layer Perceptrons
@@ -167,39 +169,22 @@ class MultilayerPerceptron(Classifier):
 
     def _train_one_epoch(self):
 
-        delta_output = 0
-        delta_input  = 0
-
-        for index,img in enumerate(self.trainingSet.input):
+        for index, img in enumerate(self.trainingSet.input):
             #forwarding,output result stored in self.memory['layer2']
             self._feed_forward(img)
-            #(txj-oxj)
-            target_error = self.trainingSet.label[index] - self.memory['layer2'][-1]
-            #output layer: delta(j) = (txj-oxj)oxj(1-oxj)
-            delta_output = self.layers[1].computeDerivative(target_error,np.ones(10))
-            #input layer
-            delta_input  = self.layers[0].computeDerivative(self.layers[1].weights,delta_output)
+            # delta E_x / delta o_j
+            delta_E = self.loss.calculateDerivative(self.trainingSet.label[index], self.memory['layer2'][-1])
+            #output layer: delta E / delta net
+            delta_output = -self.layers[1].computeDerivative(delta_E, np.ones(10))
+            #input layer: delta E / delta net
+            delta_input = self.layers[0].computeDerivative(delta_output, self.layers[1].weights)
             #update weights
-            self._update_weights(self.learningRate,delta_input,delta_output)
+            self._update_weights(self.learningRate, delta_input, delta_output)
 
     def classify(self, test_instance):
         # Classify an instance given the model of the classifier
         # You need to implement something here
         self._feed_forward(test_instance)
-
-    def calcul_score(self, labels, outps):
-        """ TODO: whatever
-        ----
-        label: a matrix
-        outp: a matrix
-        ----
-        RETURN: a float
-        """
-        score = 0
-        for label, outp in zip(labels, outps):
-            score += np.sum(np.square(label-outp))
-        score = np.sqrt(np.divide(score, labels.shape[0]))
-        return 1.0 - score
 
     def transform(self, outps):
         """

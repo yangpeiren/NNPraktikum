@@ -130,8 +130,8 @@ layers
         if self.isClassifierLayer:
             self.deltas = np.multiply(dado, np.multiply(next_derivatives, next_weights))
         else:
-            #delete the bias in next_derivatives
-            self.deltas = np.multiply(dado, np.dot(next_derivatives[1:], next_weights))
+            #delete the bias in next_weights
+            self.deltas = np.multiply(dado, np.dot(next_weights[1:], next_derivatives))
         # Or you can explicitly calculate the derivatives for two cases
         # Page 40 Back-propagation slides
         # if self.isClassifierLayer:
@@ -159,6 +159,6 @@ layers
         # Do a min_max scaling to prod to avoid overflow, for any format of inp
         # FIXME: Find a proper Range for minmax_scale!
         raw_prod = np.dot(inp, self.weights)
-        scaled_prod = minmax_scale(raw_prod, feature_range=(-10, 10))
+        # scaled_prod = minmax_scale(raw_prod, feature_range=(-10, 10))
 
-        return self.activation(scaled_prod)
+        return self.activation(raw_prod)
