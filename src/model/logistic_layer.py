@@ -40,7 +40,7 @@ class LogisticLayer():
     """
 
     def __init__(self, nIn, nOut, weights=None,
-                 activation='sigmoid', isClassifierLayer=False):
+                 activation='sigmoid', isClassifierLayer=False, dropout=0):
 
         # Get activation function from string
         self.activationString = activation
@@ -69,6 +69,7 @@ class LogisticLayer():
         # Some handy properties of the layers
         self.size = self.nOut
         self.shape = self.weights.shape
+        self.dropout = dropout
 
     def forward(self, inp):
         """
@@ -151,13 +152,12 @@ layers
         for neuron in range(0, self.nOut):
             self.weights[:, neuron] += (learningRate *
                                         deltas[neuron]*
-                                        self.inp)
+                                        self.inp*(1-self.dropout/self.nOut))
         return
 
     def _fire(self, inp):
 
-        # Do a min_max scaling to prod to avoid overflow, for any format of inp
-        # FIXME: Find a proper Range for minmax_scale!
+        # planned to do a min_max scaling to prod to avoid overflow, for any format of inp
         raw_prod = np.dot(inp, self.weights)
         # scaled_prod = minmax_scale(raw_prod, feature_range=(-10, 10))
 

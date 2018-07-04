@@ -9,6 +9,7 @@ from model.mlp import MultilayerPerceptron
 
 from report.evaluator import Evaluator
 from report.performance_plot import PerformancePlot
+from sklearn.metrics import accuracy_score
 import numpy as np
 
 def main():
@@ -33,7 +34,7 @@ def main():
     myMLPClassifier = MultilayerPerceptron(data.trainingSet,
                                         data.validationSet,
                                         data.testSet,
-                                        learningRate=0.001,
+                                        learningRate=0.01,
                                         epochs=30)
     myMLPClassifier.train()
     
@@ -62,10 +63,10 @@ def main():
     # stupidPred = myStupidClassifier.evaluate()
     # perceptronPred = myPerceptronClassifier.evaluate()
     # lrPred = myLRClassifier.evaluate()
+    mlpPred = myMLPClassifier.transform(myMLPClassifier.evaluate())
     
     # Report the result
-    # print("=========================")
-    # evaluator = Evaluator()
+    print("=========================")
     #
     # print("Result of the stupid recognizer:")
     # #evaluator.printComparison(data.testSet, stupidPred)
@@ -79,11 +80,18 @@ def main():
     # #evaluator.printComparison(data.testSet, lrPred)
     # evaluator.printAccuracy(data.testSet, lrPred)
     #
+    print("\nResult of the Multilayer Perceptron recognizer:")
+    accuracy = accuracy_score(data.testSet.label, mlpPred)
+    print("Accuracy on validation: {0:.2f}%"
+          .format(accuracy * 100))
+
     # # Draw
-    plot = PerformancePlot("MLP")
+    plot = PerformancePlot("MLP -- Validation")
     plot.draw_performance_epoch(myMLPClassifier.performances,
                                 myMLPClassifier.epochs)
-    
+    plot = PerformancePlot("MLP -- Training")
+    plot.draw_performance_epoch(myMLPClassifier.train_perform,
+                                myMLPClassifier.epochs)
     
 if __name__ == '__main__':
     main()

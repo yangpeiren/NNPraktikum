@@ -8,7 +8,7 @@ from util.activation_functions import Activation
 
 from sklearn.metrics import accuracy_score
 
-import sys
+import random
 
 class MultilayerPerceptron(Classifier):
     """
@@ -69,6 +69,7 @@ class MultilayerPerceptron(Classifier):
 
         # Record the performance 9.98977852e-01of each epoch for later usages
         # e.g. plotting, reporting..
+        self.train_perform= []
         self.performances = []
 
         self.layers = layers
@@ -79,7 +80,7 @@ class MultilayerPerceptron(Classifier):
         # Input layer
         inputActivation = "sigmoid"
         self.layers.append(LogisticLayer(train.input.shape[1], 128, 
-                           None, inputActivation, False))
+                           None, inputActivation, False, dropout=64))
 
         # Output layer
         outputActivation = "softmax"
@@ -151,10 +152,10 @@ class MultilayerPerceptron(Classifier):
             else:
                 self.memory['layer2'] = []
 
+            r = list(zip(self.trainingSet.input, self.trainingSet.label))
+            random.shuffle(r)
+            self.trainingSet.input, self.trainingSet.label = zip(*r)
             self._train_one_epoch()
-
-            error = self._compute_error(self.trainingSet.label)
-            print("error: ", error)
 
             if verbose:
 
@@ -166,6 +167,9 @@ class MultilayerPerceptron(Classifier):
                 print("Accuracy on validation: {0:.2f}%"
                       .format(accuracy * 100))
                 print("-----------------------------")
+                accuracy = accuracy_score(np.array(self.trainingSet.label),
+                                          self.transform(self.evaluate(self.trainingSet.input)))
+                self.train_perform.append(accuracy)
 
     def _train_one_epoch(self):
 
@@ -178,7 +182,12 @@ class MultilayerPerceptron(Classifier):
             delta_output = -self.layers[1].computeDerivative(delta_E, np.ones(10))
             #input layer: delta E / delta net
             delta_input = self.layers[0].computeDerivative(delta_output, self.layers[1].weights)
-            #update weights
+            #set output of all droped out neurons to 0, which are by each weight update randomly decided
+            dropped = [1] * (self.layers[0].nOut - self.layers[0].dropout)
+            dropped += [0] * self.layers[0].dropout
+            random.shuffle(dropped)
+            self.layers[0].outp = self.layers[0].outp*np.array(dropped)
+            # update weights
             self._update_weights(self.learningRate, delta_input, delta_output)
 
     def classify(self, test_instance):
@@ -197,7 +206,6 @@ class MultilayerPerceptron(Classifier):
         for index, outp in enumerate(outps):
             label_index = np.argmax(outp)
             bin_outps[index][label_index] = 1
-        print(bin_outps)
         return bin_outps
 
     def evaluate(self, test=None):
