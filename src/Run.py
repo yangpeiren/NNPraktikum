@@ -34,7 +34,7 @@ def main():
     myMLPClassifier = MultilayerPerceptron(data.trainingSet,
                                         data.validationSet,
                                         data.testSet,
-                                        learningRate=0.01,
+                                        learningRate=0.1,
                                         epochs=30)
     myMLPClassifier.train()
     
@@ -82,6 +82,10 @@ def main():
     #
     print("\nResult of the Multilayer Perceptron recognizer:")
     accuracy = accuracy_score(data.testSet.label, mlpPred)
+    print("Dropout rate by input layer: {0:.2f}%" .format(
+        100*myMLPClassifier.layers[0].dropout/myMLPClassifier.layers[0].nOut))
+    print("Weight constraint: ", myMLPClassifier.layers[0].w_limit)
+    print("Learning rate: ", myMLPClassifier.learningRate)
     print("Accuracy on validation: {0:.2f}%"
           .format(accuracy * 100))
 

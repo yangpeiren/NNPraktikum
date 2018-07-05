@@ -77,15 +77,15 @@ class MultilayerPerceptron(Classifier):
         # Build up the network from specific layers
         self.layers = []
 
-        # Input layer
+        # Input layer, optimal dropout for an input layer: 20% according to Nitish Srivastava et.al.
         inputActivation = "sigmoid"
         self.layers.append(LogisticLayer(train.input.shape[1], 128, 
-                           None, inputActivation, False, dropout=64))
+                           None, inputActivation, False, dropout=25, w_limit=4))
 
         # Output layer
         outputActivation = "softmax"
         self.layers.append(LogisticLayer(128, 10,
-                           None, outputActivation, True))
+                           None, outputActivation, True, w_limit=4))
 
         self.inputWeights = inputWeights
 
@@ -136,6 +136,7 @@ class MultilayerPerceptron(Classifier):
         self.layers[1].updateWeights(learningRate, delta_output)
         self.layers[0].updateWeights(learningRate, delta_input)
 
+
     def train(self, verbose=True):
         """Train the Multi-layer Perceptrons
         Parameters
@@ -177,9 +178,9 @@ class MultilayerPerceptron(Classifier):
             #forwarding,output result stored in self.memory['layer2']
             self._feed_forward(img)
             # delta E_x / delta o_j
-            delta_E = self.loss.calculateDerivative(self.trainingSet.label[index], self.memory['layer2'][-1])
+            delta_E = -self.loss.calculateDerivative(self.trainingSet.label[index], self.memory['layer2'][-1])
             #output layer: delta E / delta net
-            delta_output = -self.layers[1].computeDerivative(delta_E, np.ones(10))
+            delta_output = self.layers[1].computeDerivative(delta_E, np.ones(10))
             #input layer: delta E / delta net
             delta_input = self.layers[0].computeDerivative(delta_output, self.layers[1].weights)
             #set output of all droped out neurons to 0, which are by each weight update randomly decided

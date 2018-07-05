@@ -1,6 +1,7 @@
 import time
 
 import numpy as np
+import numpy.linalg as la
 from sklearn.preprocessing import minmax_scale
 
 from util.activation_functions import Activation
@@ -40,7 +41,7 @@ class LogisticLayer():
     """
 
     def __init__(self, nIn, nOut, weights=None,
-                 activation='sigmoid', isClassifierLayer=False, dropout=0):
+                 activation='sigmoid', isClassifierLayer=False, dropout=0, w_limit=1):
 
         # Get activation function from string
         self.activationString = activation
@@ -70,6 +71,7 @@ class LogisticLayer():
         self.size = self.nOut
         self.shape = self.weights.shape
         self.dropout = dropout
+        self.w_limit = w_limit
 
     def forward(self, inp):
         """
@@ -152,8 +154,18 @@ layers
         for neuron in range(0, self.nOut):
             self.weights[:, neuron] += (learningRate *
                                         deltas[neuron]*
-                                        self.inp*(1-self.dropout/self.nOut))
+                                        self.inp)
+            self.weights[:, neuron] = self.weightLimitor(self.weights[:, neuron])
         return
+
+    def weightLimitor(self, weight):
+        """
+        :param weight: a (x,)-like array
+        :return: normalized, limited weight, if necessary
+        """
+        if la.norm(weight)>self.w_limit:
+            weight = self.w_limit * weight/la.norm(weight)
+        return weight
 
     def _fire(self, inp):
 
